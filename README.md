@@ -1,243 +1,179 @@
-# Delivery Partner Backend
+1.DATABASE_URL="your_postgres_connection_string"
+2.JWT_SECRET="your_jwt_secret"
+3.JWT_EXPIRE="7d
 
-A comprehensive Node.js backend API for the Delivery Partner application supporting authentication, booking management, real-time tracking, and more.
+### 4. **Prisma Setup**
 
-## Features
-
-- **Authentication & Authorization**
-  - JWT-based authentication
-  - Role-based access control (Customer/Driver)
-  - Password reset functionality
-  - Rate limiting for security
-
-- **User Management**
-  - User registration and profile management
-  - Driver-specific profiles and statistics
-  - Document upload and verification
-  - Device token management for push notifications
-
-- **Booking System**
-  - Multi-service type support (Two-wheeler, Truck, Intercity, Packers & Movers)
-  - Real-time price estimation
-  - Status tracking and updates
-  - Location-based matching
-
-- **Real-time Features**
-  - Socket.io for live updates
-  - Driver location tracking
-  - Booking status notifications
-
-- **Pricing Engine**
-  - Dynamic pricing based on distance, time, and demand
-  - Surge pricing support
-  - Service-specific pricing rules
-
-## Tech Stack
-
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT (JSON Web Tokens)
-- **Validation**: Joi
-- **Real-time**: Socket.io
-- **Security**: Helmet, Rate limiting, CORS
-- **Password Hashing**: bcryptjs
-
-## Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd delivery-partner-backend
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Update the `.env` file with your configuration:
-   ```env
-   NODE_ENV=development
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/delivery-partner
-   JWT_SECRET=your-super-secret-jwt-key
-   JWT_EXPIRE=7d
-   FRONTEND_URL=http://localhost:3000
-   ```
-
-4. **Start the server**
-   ```bash
-   # Development
-   npm run dev
-   
-   # Production
-   npm start
-   ```
-
-## API Endpoints
-
-### Authentication
-- `POST /api/auth/signup` - User registration
-- `POST /api/auth/signin` - User login
-- `GET /api/auth/me` - Get current user
-- `PUT /api/auth/change-password` - Change password
-- `POST /api/auth/forgot-password` - Request password reset
-- `POST /api/auth/reset-password` - Reset password
-- `POST /api/auth/logout` - Logout user
-
-### Users
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update user profile
-- `GET /api/users/:userId` - Get public user profile
-- `GET /api/users/stats/overview` - Get user statistics
-- `PUT /api/users/device-token` - Update device token
-- `DELETE /api/users/account` - Deactivate account
-
-### Drivers
-- `GET /api/drivers/profile` - Get driver profile with stats
-- `PUT /api/drivers/profile` - Update driver profile
-- `GET /api/drivers/trips` - Get driver trips
-- `GET /api/drivers/active-trip` - Get current active trip
-- `POST /api/drivers/accept-booking/:bookingId` - Accept a booking
-- `GET /api/drivers/earnings` - Get earnings report
-- `PATCH /api/drivers/availability` - Toggle availability
-- `GET /api/drivers/ratings` - Get ratings and reviews
-
-### Bookings
-- `POST /api/bookings` - Create new booking
-- `GET /api/bookings` - Get user bookings
-- `GET /api/bookings/:bookingId` - Get specific booking
-- `PATCH /api/bookings/:bookingId/status` - Update booking status
-- `PATCH /api/bookings/:bookingId/cancel` - Cancel booking
-- `PATCH /api/bookings/:bookingId/location` - Update driver location
-- `POST /api/bookings/:bookingId/rating` - Add rating and review
-- `GET /api/bookings/available/nearby` - Get nearby available bookings
-
-### Estimates
-- `POST /api/estimates/calculate` - Calculate price estimate
-- `GET /api/estimates/service-types` - Get available service types
-- `GET /api/estimates/pricing/:serviceType` - Get pricing details
-- `GET /api/estimates/surge/:serviceType` - Get surge pricing info
-
-## Socket.io Events
-
-### Client to Server
-- `join_booking` - Join booking room for updates
-- `leave_booking` - Leave booking room
-- `driver_location_update` - Update driver location
-
-### Server to Client
-- `driver_location` - Receive driver location updates
-- `booking_status_update` - Receive booking status changes
-- `new_booking_available` - Notify drivers of new bookings
-
-## Database Models
-
-### User
-- Personal information (name, phone, email)
-- Authentication data (password hash)
-- Role information (isDriver)
-- Profile image and address
-- Device tokens for notifications
-
-### Booking
-- Service type and status
-- Pickup and drop locations
-- Pricing breakdown
-- Customer and driver references
-- Tracking history
-- Ratings and reviews
-
-## Security Features
-
-- JWT token authentication
-- Password hashing with bcrypt
-- Rate limiting on sensitive endpoints
-- CORS protection
-- Helmet for security headers
-- Input validation with Joi
-- Error handling middleware
-
-## Environment Variables
-
-```env
-# Server Configuration
-NODE_ENV=development
-PORT=5000
-
-# Database
-MONGODB_URI=mongodb://localhost:27017/delivery-partner
-
-# JWT
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRE=7d
-
-# Frontend
-FRONTEND_URL=http://localhost:3000
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-
-# Optional Services
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_USER=your-email@gmail.com
-EMAIL_PASS=your-app-password
-
-TWILIO_ACCOUNT_SID=your-twilio-account-sid
-TWILIO_AUTH_TOKEN=your-twilio-auth-token
-TWILIO_PHONE_NUMBER=your-twilio-phone-number
-
-CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
-CLOUDINARY_API_KEY=your-cloudinary-api-key
-CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+#### a. **Generate Prisma Client**
+```bash
+npx prisma generate
 ```
 
-## Development
+#### b. **Run Migrations**
+```bash
+npx prisma migrate dev --name init
+```
 
-1. **Start MongoDB** (if running locally)
-   ```bash
-   mongod
-   ```
+#### c. **(Optional) Open Prisma Studio**
+```bash
+npx prisma studio
+```
 
-2. **Run in development mode**
-   ```bash
-   npm run dev
-   ```
+---
 
-3. **Test the API**
-   - Use Postman or any API client
-   - Base URL: `http://localhost:5000/api`
-   - Health check: `GET /api/health`
+## 🏃‍♂️ Running the Backend
 
-## Deployment
+### **Development Mode**
+```bash
+npm run dev
+```
 
-1. **Environment Setup**
-   - Set NODE_ENV=production
-   - Configure production MongoDB URI
-   - Set strong JWT secret
-   - Configure CORS for production frontend URL
+### **Production Build**
+```bash
+npm run build
+npm start
+```
 
-2. **Build and Start**
-   ```bash
-   npm start
-   ```
+---
 
-## Contributing
+## 🧪 API Test Cases
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+All endpoints are prefixed with: `http://localhost:3000/api/`
 
-## License
+### **1. Users**
 
-This project is licensed under the MIT License.
+#### Create User
+- **POST** `/users`
+- **Body:**
+  ```json
+  {
+    "email": "alice@example.com",
+    "name": "Alice",
+    "password": "password123"
+  }
+  ```
+- **Expected:** 201 Created, user object
+
+#### Get All Users
+- **GET** `/users`
+- **Expected:** 200 OK, array of users
+
+---
+
+### **2. Drivers**
+
+#### Create Driver
+- **POST** `/drivers`
+- **Body:**
+  ```json
+  {
+    "name": "Bob Driver",
+    "licenseNo": "DL123456",
+    "vehicleType": "truck",
+    "vehicleNumber": "AB12CD3456"
+  }
+  ```
+- **Expected:** 201 Created, driver object
+
+#### Get All Drivers
+- **GET** `/drivers`
+- **Expected:** 200 OK, array of drivers
+
+---
+
+### **3. Bookings**
+
+#### Create Booking
+- **POST** `/bookings`
+- **Body:**
+  ```json
+  {
+    "userId": 1,
+    "driverId": 1,
+    "status": "pending"
+  }
+  ```
+- **Expected:** 201 Created, booking object
+
+#### Get All Bookings
+- **GET** `/bookings`
+- **Expected:** 200 OK, array of bookings
+
+---
+
+### **4. Coupons**
+
+#### Create Coupon
+- **POST** `/coupons`
+- **Body:**
+  ```json
+  {
+    "code": "DISCOUNT10",
+    "discount": 10,
+    "validTill": "2024-12-31T23:59:59.000Z"
+  }
+  ```
+- **Expected:** 201 Created, coupon object
+
+#### Get All Coupons
+- **GET** `/coupons`
+- **Expected:** 200 OK, array of coupons
+
+---
+
+### **5. Transactions**
+
+#### Create Transaction
+- **POST** `/transactions`
+- **Body:**
+  ```json
+  {
+    "userId": 1,
+    "bookingId": 1,
+    "couponId": 1,
+    "amount": 100.0
+  }
+  ```
+- **Expected:** 201 Created, transaction object
+
+#### Get All Transactions
+- **GET** `/transactions`
+- **Expected:** 200 OK, array of transactions
+
+---
+
+## ❌ Negative Test Cases
+
+- **Create user with existing email:** Should return 400/409 error.
+- **Create booking with invalid user/driver ID:** Should return 400/404 error.
+- **Create coupon with past date:** Should return 400 error.
+- **Create user with missing fields:** Should return 400 error.
+
+---
+
+## 🛠️ Useful Prisma CLI Commands
+
+- **Generate client:**  
+  `npx prisma generate`
+- **Run migrations:**  
+  `npx prisma migrate dev --name <migration-name>`
+- **Open Prisma Studio:**  
+  `npx prisma studio`
+- **Format schema:**  
+  `npx prisma format`
+- **Reset database:**  
+  `npx prisma migrate reset`
+
+---
+
+## 📝 Notes
+
+- All endpoints expect and return JSON.
+- Use the returned IDs from POST requests for related resources.
+- If you add authentication, include JWT tokens in the headers.
+
+---
+
+## 📬 Contact
+
+For questions, open an issue or contact the maintainer.

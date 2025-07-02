@@ -1,7 +1,6 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
-// Auth validation schemas
-const signUpSchema = Joi.object({
+export const signUpSchema = Joi.object({
   name: Joi.string().min(2).max(50).trim().required(),
   phone: Joi.string().min(10).max(15).pattern(/^[0-9]+$/).required(),
   password: Joi.string().min(6).max(128).required(),
@@ -10,14 +9,13 @@ const signUpSchema = Joi.object({
   email: Joi.string().email().optional()
 });
 
-const signInSchema = Joi.object({
+export const signInSchema = Joi.object({
   phone: Joi.string().min(10).max(15).pattern(/^[0-9]+$/).required(),
   password: Joi.string().min(6).required(),
   isDriver: Joi.boolean().default(false)
 });
 
-// Profile validation schemas
-const updateProfileSchema = Joi.object({
+export const updateProfileSchema = Joi.object({
   name: Joi.string().min(2).max(50).trim().optional(),
   email: Joi.string().email().optional(),
   address: Joi.object({
@@ -33,8 +31,7 @@ const updateProfileSchema = Joi.object({
   }).optional()
 });
 
-// Booking validation schemas
-const createBookingSchema = Joi.object({
+export const createBookingSchema = Joi.object({
   serviceType: Joi.string().valid('two-wheeler', 'truck', 'intercity', 'packers-movers').required(),
   pickupLocation: Joi.object({
     address: Joi.string().required(),
@@ -64,8 +61,7 @@ const createBookingSchema = Joi.object({
   })).optional()
 });
 
-// Driver validation schemas
-const driverProfileSchema = Joi.object({
+export const driverProfileSchema = Joi.object({
   licenseNumber: Joi.string().required(),
   vehicleType: Joi.string().valid('bike', 'car', 'van', 'truck', 'tempo').required(),
   vehicleNumber: Joi.string().required(),
@@ -78,31 +74,18 @@ const driverProfileSchema = Joi.object({
   }).required()
 });
 
-// Password reset schemas
-const forgotPasswordSchema = Joi.object({
+export const forgotPasswordSchema = Joi.object({
   phone: Joi.string().min(10).max(15).pattern(/^[0-9]+$/).required()
 });
 
-const resetPasswordSchema = Joi.object({
+export const resetPasswordSchema = Joi.object({
   token: Joi.string().required(),
   password: Joi.string().min(6).max(128).required(),
   confirmPassword: Joi.string().valid(Joi.ref('password')).required()
 });
 
-// Change password schema
-const changePasswordSchema = Joi.object({
+export const changePasswordSchema = Joi.object({
   currentPassword: Joi.string().required(),
   newPassword: Joi.string().min(6).max(128).required(),
   confirmPassword: Joi.string().valid(Joi.ref('newPassword')).required()
-});
-
-module.exports = {
-  signUpSchema,
-  signInSchema,
-  updateProfileSchema,
-  createBookingSchema,
-  driverProfileSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
-  changePasswordSchema
-};
+}); 

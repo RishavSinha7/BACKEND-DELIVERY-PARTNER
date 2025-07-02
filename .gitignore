@@ -102,3 +102,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+dist/
+.env
+prisma/.env
