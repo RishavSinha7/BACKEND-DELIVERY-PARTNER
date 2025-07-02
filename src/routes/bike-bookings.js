@@ -1,5 +1,5 @@
 const express = require('express');
-const { BikeBooking, Bike } = require('../models/NewSchemaModels');
+const { BikeBooking, Bike } = require('../models');
 const Joi = require('joi');
 
 const router = express.Router();

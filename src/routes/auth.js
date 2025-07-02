@@ -1,6 +1,6 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
-const User = require('../models/User');
+const { supabase } = require('../models');
 const { signUpSchema, signInSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } = require('../utils/validation');
 const { generateToken } = require('../utils/jwt');
 const { authenticate } = require('../middleware/auth');

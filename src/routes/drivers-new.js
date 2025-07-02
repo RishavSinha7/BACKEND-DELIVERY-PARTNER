@@ -1,5 +1,5 @@
 const express = require('express');
-const { Driver, DriverAssignment } = require('../models/NewSchemaModels');
+const { Driver, DriverAssignment } = require('../models');
 const Joi = require('joi');
 
 const router = express.Router();

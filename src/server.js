@@ -8,19 +8,17 @@ const http = require('http');
 const socketIo = require('socket.io');
 require('dotenv').config();
 
-// Import database configuration
-const { testConnection, syncDatabase } = require('./config/database');
-
 // Import routes
+const bikesRoutes = require('./routes/bikes');
+const trucksRoutes = require('./routes/trucks');
+const bikeBookingsRoutes = require('./routes/bike-bookings');
+const truckBookingsRoutes = require('./routes/truck-bookings');
+const driversRoutes = require('./routes/drivers-new');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
-const driverRoutes = require('./routes/drivers');
-const bookingRoutes = require('./routes/bookings');
-const estimateRoutes = require('./routes/estimates');
 
 // Import middleware
-const { errorHandler } = require('./middleware/errorHandler');
-const socketAuth = require('./middleware/socketAuth');
+const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 const app = express();
 const server = http.createServer(app);
@@ -48,109 +46,145 @@ app.use(helmet()); // Security headers
 app.use(compression()); // Compress responses
 app.use(morgan('combined')); // Logging
 app.use(limiter); // Rate limiting
+
+// CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  origin: process.env.FRONTEND_URL || "http://localhost:3000",
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
+
 app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    success: true, 
-    message: 'Server is running',
+app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Delivery Partner API is running',
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
+    version: '1.0.0',
+    schema: 'supabase-postgresql'
   });
 });
 
 // API Routes
+app.use('/api/v1/bikes', bikesRoutes);
+app.use('/api/v1/trucks', trucksRoutes);
+app.use('/api/v1/bike-bookings', bikeBookingsRoutes);
+app.use('/api/v1/truck-bookings', truckBookingsRoutes);
+app.use('/api/v1/drivers', driversRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/drivers', driverRoutes);
-app.use('/api/bookings', bookingRoutes);
-app.use('/api/estimates', estimateRoutes);
 
-// Socket.io connection handling
-io.use(socketAuth);
-
-io.on('connection', (socket) => {
-  console.log(`User connected: ${socket.user.id}`);
-  
-  // Join user to their personal room
-  socket.join(`user_${socket.user.id}`);
-  
-  // Join drivers to driver room
-  if (socket.user.isDriver) {
-    socket.join('drivers');
+// Test endpoint for database connectivity
+app.get('/api/test', async (req, res) => {
+  try {
+    const { supabase } = require('./models');
+    
+    // Test database connection
+    const { data, error } = await supabase
+      .from('bikes')
+      .select('*')
+      .limit(1);
+    
+    if (error) throw error;
+    
+    res.json({
+      success: true,
+      message: 'Database connection successful',
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed',
+      error: error.message
+    });
   }
+});
 
-  // Handle booking events
-  socket.on('join_booking', (bookingId) => {
-    socket.join(`booking_${bookingId}`);
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log(`Client connected: ${socket.id}`);
+  
+  // Join driver room for location updates
+  socket.on('join-driver', (driverId) => {
+    socket.join(`driver-${driverId}`);
+    console.log(`Driver ${driverId} joined room`);
   });
-
-  socket.on('leave_booking', (bookingId) => {
-    socket.leave(`booking_${bookingId}`);
+  
+  // Join customer room for booking updates
+  socket.on('join-customer', (customerId) => {
+    socket.join(`customer-${customerId}`);
+    console.log(`Customer ${customerId} joined room`);
   });
-
+  
   // Handle driver location updates
-  socket.on('driver_location_update', (data) => {
-    if (socket.user.isDriver) {
-      socket.to(`booking_${data.bookingId}`).emit('driver_location', {
-        latitude: data.latitude,
-        longitude: data.longitude,
-        timestamp: new Date()
-      });
-    }
+  socket.on('driver-location-update', (data) => {
+    // Broadcast to customers tracking this driver
+    socket.broadcast.to(`driver-${data.driverId}`).emit('location-update', data);
   });
-
+  
+  // Handle booking status updates
+  socket.on('booking-update', (data) => {
+    // Broadcast to relevant customers
+    socket.broadcast.to(`customer-${data.customerId}`).emit('booking-status-update', data);
+  });
+  
   socket.on('disconnect', () => {
-    console.log(`User disconnected: ${socket.user.id}`);
+    console.log(`Client disconnected: ${socket.id}`);
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Route not found'
-  });
-});
-
-// Error handling middleware (must be last)
+// Error handling middleware
+app.use(notFound);
 app.use(errorHandler);
 
-// Database connection and server startup
-testConnection()
-  .then(async () => {
-    console.log('✅ Database connection established');
+// Start server
+const startServer = async () => {
+  try {
+    console.log('🚀 Starting Delivery Partner Server...');
+    console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🔧 Database: Supabase PostgreSQL`);
     
-    // Sync database models
-    await syncDatabase();
-    console.log('✅ Database models synchronized');
-    
-    // Start server
     server.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🗄️ Database: Supabase PostgreSQL`);
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`🌐 API Base URL: http://localhost:${PORT}`);
+      console.log(`📚 Health Check: http://localhost:${PORT}/health`);
+      console.log(`🧪 Test Endpoint: http://localhost:${PORT}/api/test`);
+      console.log('');
+      console.log('📋 Available API Endpoints:');
+      console.log('  🚲 Bikes: /api/v1/bikes');
+      console.log('  🚛 Trucks: /api/v1/trucks');
+      console.log('  📝 Bike Bookings: /api/v1/bike-bookings');
+      console.log('  📝 Truck Bookings: /api/v1/truck-bookings');
+      console.log('  👨‍💼 Drivers: /api/v1/drivers');
+      console.log('  🔐 Auth: /api/auth');
+      console.log('  👤 Users: /api/users');
+      console.log('  💰 Estimates: /api/estimates');
+      console.log('');
+      console.log('🎯 Ready to accept requests!');
     });
-  })
-  .catch((error) => {
-    console.error('❌ Database connection failed:', error);
+    
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
-  });
+  }
+};
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    const { sequelize } = require('./config/database');
-    sequelize.close();
-    process.exit(0);
-  });
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
 });
 
-module.exports = { app, io };
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+startServer();
+
+module.exports = { app, server, io };

@@ -1,5 +1,5 @@
 const express = require('express');
-const { Truck } = require('../models/NewSchemaModels');
+const { Truck } = require('../models');
 const Joi = require('joi');
 
 const router = express.Router();

@@ -1,5 +1,5 @@
 const { verifyToken } = require('../utils/jwt');
-const User = require('../models/User');
+const { supabase } = require('../models');
 
 const authenticate = async (req, res, next) => {
   try {
